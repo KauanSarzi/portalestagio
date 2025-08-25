@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Vagas de Estágio</title>
+  <link rel="stylesheet" href="https://unpkg.com/sakura.css/css/sakura.css">
+</head>
+<body>
+  <h1>Vagas de Estágio</h1>
+
+  <!-- FORM -->
+  <table>
+    <tr><td>ID:</td><td><input id="txtId" disabled></td></tr>
+    <tr><td>Título:</td><td><input id="txtTitulo" placeholder="Título" required></td></tr>
+    <tr><td>Descrição:</td><td><input id="txtDescricao" placeholder="Descrição" required></td></tr>
+    <tr><td>Data Pub.:</td><td><input id="txtDataPublicacao" type="date"></td></tr>
+    <tr><td>Ativo:</td><td><input id="chkAtivo" type="checkbox"></td></tr>
+    <tr><td>Salário:</td><td><input id="txtSalario" type="number" step="0.01"></td></tr>
+    <tr><td>Carga Horária:</td><td><input id="txtCargaHoraria" type="number" required></td></tr>
+    <tr><td>Modalidade:</td>
+      <td>
+        <select id="txtModalidade" required>
+          <option value="">---</option>
+          <option value="presencial">Presencial</option>
+          <option value="hibrido">Híbrido</option>
+          <option value="online">Online</option>
+        </select>
+      </td>
+    </tr>
+    <tr><td>Empresa:</td>
+      <td>
+        <select id="selectEmpresa" required>
+          <option value="">---</option>
+          <!-- preenchido por carregarEmpresas() -->
+        </select>
+      </td>
+    </tr>
+    <tr><td>Áreas:</td>
+      <td>
+        <select id="selectAreas" multiple style="height:100px;" required>
+          <!-- preenchido por carregarAreas() -->
+        </select>
+      </td>
+    </tr>
+    <tr>
+      <td></td>
+      <td>
+        <button id="btnNovo">Novo</button>
+        <button id="btnSalvar" disabled>Salvar</button>
+        <button id="btnEncerrar" disabled>Encerrar</button>
+        <button id="btnApagar" disabled>Apagar</button>
+        <button id="btnCancelar" disabled>Cancelar</button>
+      </td>
+    </tr>
+  </table>
+
+  <p id="msg" style="color:red;font-weight:bold"></p>
+
+  <!-- TABELA -->
+  <table>
+    <thead>
+      <tr>
+        <th>ID</th><th>Título</th><th>Empresa</th><th>Modalidade</th><th>Ativo</th><th>Data</th>
+      </tr>
+    </thead>
+    <tbody id="corpoTabela"></tbody>
+  </table>
+
+  <script>
+  (function(){
+    const urlVag = '/api/vagas';
+    const urlEmp = '/api/empresas';
+    const urlArea = '/api/areas';
+    let vagas = [], empresas = [], areas = [];
+
+    async function carregarEmpresas() {
+      try {
+        const res = await fetch(urlEmp);
+        const pageObj = await res.json();
+        empresas = pageObj.content || pageObj || [];
+        document.getElementById('selectEmpresa').innerHTML =
+          '<option value="">---</option>' +
+          empresas.map(e =>
+            `<option value="${e.id}">${e.nomeFantasia}</option>`
+          ).join('');
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    async function carregarAreas() {
+      try {
+        const res = await fetch(urlArea);
+        const pageObj = await res.json();
+        areas = pageObj.content || pageObj || [];
+        document.getElementById('selectAreas').innerHTML =
+          areas.map(a =>
+            `<option value="${a.id}">${a.nome}</option>`
+          ).join('');
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    async function listar() {
+      try {
+        const res = await fetch(urlVag);
+        const pageObj = await res.json();
+        vagas = pageObj.content || pageObj || [];
+        document.getElementById('corpoTabela').innerHTML = vagas.map(v => {
+          const emp = v.empresa ? v.empresa.nomeFantasia : '';
+          return `<tr>
+            <td><a href="#" onclick="selecionar(${v.id})">${v.id}</a></td>
+            <td>${v.titulo}</td>
+            <td>${emp}</td>
+            <td>${v.modalidade}</td>
+            <td>${v.ativo}</td>
+            <td>${v.dataPublicacao ? v.dataPublicacao.slice(0,10) : ''}</td>
+          </tr>`;
+        }).join('');
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    window.selecionar = id => {
+      const v = vagas.find(x=>x.id===id);
+      if (!v) return;
+      document.getElementById('txtId').value           = v.id;
+      document.getElementById('txtTitulo').value       = v.titulo;
+      document.getElementById('txtDescricao').value    = v.descricao;
+      document.getElementById('txtDataPublicacao').value = v.dataPublicacao ? v.dataPublicacao.slice(0,10) : '';
+      document.getElementById('chkAtivo').checked      = v.ativo;
+      document.getElementById('txtSalario').value      = v.salario;
+      document.getElementById('txtCargaHoraria').value = v.cargaHoraria;
+      document.getElementById('txtModalidade').value   = v.modalidade;
+      document.getElementById('selectEmpresa').value   = v.empresa ? v.empresa.id : '';
+      const selA = document.getElementById('selectAreas');
+      Array.from(selA.options).forEach(opt => {
+        opt.selected = (v.areas && v.areas.some(a=>a.id===+opt.value));
+      });
+      toggle(true);
+    };
+
+    async function salvar() {
+      const id = document.getElementById('txtId').value;
+      const url = id ? `${urlVag}/${id}` : urlVag;
+      const metodo = id ? 'PUT' : 'POST';
+
+      const payload = {
+        titulo: document.getElementById('txtTitulo').value.trim(),
+        descricao: document.getElementById('txtDescricao').value.trim(),
+        dataPublicacao: document.getElementById('txtDataPublicacao').value || null,
+        ativo: document.getElementById('chkAtivo').checked,
+        salario: parseFloat(document.getElementById('txtSalario').value) || 0.0,
+        cargaHoraria: parseInt(document.getElementById('txtCargaHoraria').value),
+        modalidade: document.getElementById('txtModalidade').value.trim(),
+        empresa: { id: parseInt(document.getElementById('selectEmpresa').value) },
+        areas: Array.from(document.getElementById('selectAreas').selectedOptions)
+                    .map(opt => ({ id: parseInt(opt.value) }))
+      };
+
+      console.log('SALVAR VAGA →', { url, metodo, payload });
+
+      if (!payload.titulo || !payload.descricao || isNaN(payload.cargaHoraria) ||
+          !payload.modalidade || !payload.empresa.id || payload.areas.length === 0) {
+        document.getElementById('msg').textContent =
+          'Preencha Título, Descrição, Carga Horária, Modalidade, Empresa e pelo menos 1 Área.';
+        return;
+      }
+
+      try {
+        const res = await fetch(url, {
+          method: metodo,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        console.log('→ Status:', res.status);
+        const texto = await res.text();
+        console.log('→ Corpo response:', texto);
+
+        if (!res.ok) {
+          document.getElementById('msg').textContent =
+            `Erro ${res.status}: ${texto}`;
+          return;
+        }
+        reiniciar();
+      } catch (erro) {
+        console.error('Erro de rede:', erro);
+        document.getElementById('msg').textContent =
+          'Erro de rede ao tentar salvar. Veja console.';
+      }
+    }
+
+    async function encerrar() {
+      const id = document.getElementById('txtId').value;
+      if (!id) return;
+      try {
+        const res = await fetch(`${urlVag}/${id}/encerrar`, { method: 'PATCH' });
+        console.log('→ Encerrar status:', res.status);
+        if (!res.ok) {
+          const txt = await res.text();
+          document.getElementById('msg').textContent = `Erro ${res.status}: ${txt}`;
+          return;
+        }
+        reiniciar();
+      } catch (e) {
+        console.error(e);
+        document.getElementById('msg').textContent = 'Erro ao encerrar.';
+      }
+    }
+
+    async function apagar() {
+      const id = document.getElementById('txtId').value;
+      if (!id) return;
+      try {
+        const res = await fetch(`${urlVag}/${id}`, { method: 'DELETE' });
+        console.log('→ Apagar status:', res.status);
+        if (!res.ok) {
+          const txt = await res.text();
+          document.getElementById('msg').textContent = `Erro ${res.status}: ${txt}`;
+          return;
+        }
+        reiniciar();
+      } catch (e) {
+        console.error(e);
+        document.getElementById('msg').textContent = 'Erro ao apagar.';
+      }
+    }
+
+    function reiniciar() {
+      ['Id','Titulo','Descricao','DataPublicacao','Salario','CargaHoraria','Modalidade']
+        .forEach(f => document.getElementById('txt'+f).value = '');
+      document.getElementById('chkAtivo').checked = false;
+      document.getElementById('selectEmpresa').selectedIndex = 0;
+      Array.from(document.getElementById('selectAreas').options)
+           .forEach(opt => opt.selected = false);
+      toggle(true);
+      carregarEmpresas();
+      carregarAreas();
+      listar();
+    }
+
+    function toggle(edit) {
+      document.getElementById('btnSalvar').disabled    = !edit && !document.getElementById('txtTitulo').value;
+      document.getElementById('btnEncerrar').disabled = !edit;
+      document.getElementById('btnApagar').disabled   = !edit;
+      document.getElementById('btnCancelar').disabled = !edit;
+    }
+
+    document.getElementById('btnNovo').onclick     = reiniciar;
+    document.getElementById('btnSalvar').onclick   = salvar;
+    document.getElementById('btnEncerrar').onclick = encerrar;
+    document.getElementById('btnApagar').onclick   = apagar;
+    document.getElementById('btnCancelar').onclick = reiniciar;
+
+    carregarEmpresas();
+    carregarAreas();
+    listar();
+  })();
+  </script>
+</body>
+</html>

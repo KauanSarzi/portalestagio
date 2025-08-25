@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Página Inicial – Portal de Estágios</title>
+  <link rel="stylesheet" href="https://unpkg.com/sakura.css/css/sakura.css">
+  <style>
+    .hidden { display: none; }
+    .container { max-width: 800px; margin: auto; padding: 1rem; }
+    .btn-group button { margin-right: 0.5rem; }
+    .section { margin-top: 2rem; }
+    table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
+    th, td { border: 1px solid #ccc; padding: 0.5rem; }
+    th { background: #f0f0f0; }
+  </style>
+</head>
+<body>
+  <div class="container">
+
+    <div id="login-section" class="section">
+      <h2>Bem-vindo ao Portal de Estágios</h2>
+      <p>Escolha o perfil para “logar”:</p>
+      <div class="btn-group">
+        <button id="btnLoginEstudante">Entrar como Estudante</button>
+        <button id="btnLoginEmpresa">Entrar como Empresa</button>
+      </div>
+      <div id="login-form-estudante" class="hidden">
+        <p>Informe seu <strong>ID de Estudante</strong> (número):</p>
+        <input type="number" id="inputEstudanteId" placeholder="Ex.: 1">
+        <button id="btnConfirmarEstudante">Confirmar Estudante</button>
+      </div>
+      <div id="login-form-empresa" class="hidden">
+        <p>Informe seu <strong>ID de Empresa</strong> (número):</p>
+        <input type="number" id="inputEmpresaId" placeholder="Ex.: 1">
+        <button id="btnConfirmarEmpresa">Confirmar Empresa</button>
+      </div>
+    </div>
+
+ 
+    <div id="main-content" class="hidden">
+      <nav class="section">
+        <button id="btnEditarPerfil">Editar Perfil</button>
+        <button id="btnLogout">Sair</button>
+      </nav>
+
+
+      <div id="estudante-section" class="section hidden">
+        <h2>Área do Estudante</h2>
+        <p>Olá, <span id="nomeEstudante"></span>! Aqui estão suas vagas:</p>
+
+
+        <div class="section">
+          <h3>Vagas em Aberto nas Suas Áreas de Interesse</h3>
+          <div id="vagas-relacionadas-container">
+            <p>Carregando vagas...</p>
+          </div>
+        </div>
+
+   
+        <div class="section">
+          <h3>Vagas em que Você já se Inscreveu</h3>
+          <div id="vagas-inscritas-container">
+            <p>Carregando suas inscrições...</p>
+          </div>
+        </div>
+
+        <div class="section">
+          <h3>Pesquisar Vagas por Área</h3>
+          <select id="selectPesquisarArea">
+            <option value="">– Escolha uma Área –</option>
+          </select>
+          <button id="btnPesquisarPorArea">Buscar</button>
+          <div id="resultado-pesquisa-vagas" style="margin-top:1rem;"></div>
+        </div>
+      </div>
+
+      <div id="empresa-section" class="section hidden">
+        <h2>Área da Empresa</h2>
+        <p>Olá, <span id="nomeEmpresa"></span>! Aqui estão os inscritos em suas vagas:</p>
+
+        <div id="inscritos-por-vaga-container">
+          <p>Carregando inscrições...</p>
+        </div>
+
+        <div class="section">
+          <button id="btnMinhasVagas">Ver Minhas Vagas</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+  (function() {
+    const loginSection = document.getElementById('login-section');
+    const btnLoginEstudante = document.getElementById('btnLoginEstudante');
+    const btnLoginEmpresa = document.getElementById('btnLoginEmpresa');
+    const loginFormEstudante = document.getElementById('login-form-estudante');
+    const loginFormEmpresa = document.getElementById('login-form-empresa');
+    const inputEstudanteId = document.getElementById('inputEstudanteId');
+    const inputEmpresaId = document.getElementById('inputEmpresaId');
+    const btnConfirmarEstudante = document.getElementById('btnConfirmarEstudante');
+    const btnConfirmarEmpresa = document.getElementById('btnConfirmarEmpresa');
+
+    const mainContent = document.getElementById('main-content');
+    const btnLogout = document.getElementById('btnLogout');
+    const btnEditarPerfil = document.getElementById('btnEditarPerfil');
+
+    const estudanteSection = document.getElementById('estudante-section');
+    const empresaSection = document.getElementById('empresa-section');
+
+    const nomeEstudanteSpan = document.getElementById('nomeEstudante');
+    const vagasRelacionadasContainer = document.getElementById('vagas-relacionadas-container');
+    const vagasInscritasContainer = document.getElementById('vagas-inscritas-container');
+    const selectPesquisarArea = document.getElementById('selectPesquisarArea');
+    const btnPesquisarPorArea = document.getElementById('btnPesquisarPorArea');
+    const resultadoPesquisaVagas = document.getElementById('resultado-pesquisa-vagas');
+
+    const nomeEmpresaSpan = document.getElementById('nomeEmpresa');
+    const inscritosPorVagaContainer = document.getElementById('inscritos-por-vaga-container');
+    const btnMinhasVagas = document.getElementById('btnMinhasVagas');
+
+    const API_ESTUDANTES  = '/api/estudantes';
+    const API_EMPRESAS    = '/api/empresas';
+    const API_VAGAS       = '/api/vagas';
+    const API_INSCRICOES  = '/api/inscricoes';
+    const API_AREAS       = '/api/areas';
+
+    let currentRole   = null;
+    let currentUserId = null;
+
+    function show(elem) { elem.classList.remove('hidden'); }
+    function hide(elem) { elem.classList.add('hidden'); }
+    function clearChildren(elem) { elem.innerHTML = ''; }
+
+    btnLoginEstudante.addEventListener('click', () => {
+      hide(loginFormEmpresa);
+      show(loginFormEstudante);
+    });
+  
+    btnLoginEmpresa.addEventListener('click', () => {
+      hide(loginFormEstudante);
+      show(loginFormEmpresa);
+    });
+
+
+    btnConfirmarEstudante.addEventListener('click', () => {
+      const id = inputEstudanteId.value.trim();
+      if (!id) {
+        alert('Informe um ID de Estudante válido.');
+        return;
+      }
+      currentRole   = 'estudante';
+      currentUserId = id;
+      iniciarComoEstudante();
+    });
+
+    btnConfirmarEmpresa.addEventListener('click', () => {
+      const id = inputEmpresaId.value.trim();
+      if (!id) {
+        alert('Informe um ID de Empresa válido.');
+        return;
+      }
+      currentRole   = 'empresa';
+      currentUserId = id;
+      iniciarComoEmpresa();
+    });
+
+    btnLogout.addEventListener('click', () => {
+      location.reload();
+    });
+
+    btnEditarPerfil.addEventListener('click', () => {
+      if (currentRole === 'estudante') {
+        window.location = `estudante.html?id=${currentUserId}`;
+      } else if (currentRole === 'empresa') {
+        window.location = `empresa.html?id=${currentUserId}`;
+      }
+    });
+
+    async function iniciarComoEstudante() {
+      hide(loginSection);
+      show(mainContent);
+      show(estudanteSection);
+
+      try {
+    
+        const resEst = await fetch(`${API_ESTUDANTES}/${currentUserId}`);
+        if (!resEst.ok) throw new Error('Estudante não encontrado');
+        const estudante = await resEst.json();
+        nomeEstudanteSpan.textContent = estudante.nome;
+
+
+        await carregarTodasAreas();
+
+
+        carregarVagasRelacionadas(estudante.areas || []);
+
+   
+        carregarVagasInscritas();
+      } catch (err) {
+        console.error(err);
+        alert('Erro ao carregar dados do estudante. Verifique o ID e tente novamente.');
+        location.reload();
+      }
+    }
+
+
+    async function iniciarComoEmpresa() {
+      hide(loginSection);
+      show(mainContent);
+      show(empresaSection);
+
+      try {
+
+        const resEmp = await fetch(`${API_EMPRESAS}/${currentUserId}`);
+        if (!resEmp.ok) throw new Error('Empresa não encontrada');
+        const empresa = await resEmp.json();
+        nomeEmpresaSpan.textContent = empresa.nomeFantasia;
+
+        carregarInscritosPorVaga(currentUserId);
+      } catch (err) {
+        console.error(err);
+        alert('Erro ao carregar dados da empresa. Verifique o ID e tente novamente.');
+        location.reload();
+      }
+    }
+
+
+    async function carregarTodasAreas() {
+      try {
+        const res = await fetch(API_AREAS);
+        if (!res.ok) {
+          const txt = await res.text();
+          throw new Error(`Erro ${res.status}: ${txt}`);
+        }
+        const pageObj = await res.json();
+        const todasAreas = pageObj.content || pageObj || [];
+        clearChildren(selectPesquisarArea);
+        selectPesquisarArea.innerHTML = '<option value="">– Escolha uma Área –</option>' +
+          todasAreas.map(a => `<option value="${a.id}">${a.nome}</option>`).join('');
+      } catch (err) {
+        console.error('Erro ao carregar áreas:', err);
+      }
+    }
+
+    async function carregarVagasRelacionadas(areasInteresse) {
+      try {
+        const resVagas = await fetch(API_VAGAS);
+        if (!resVagas.ok) {
+          const txt = await resVagas.text();
+          throw new Error(`Erro ${resVagas.status}: ${txt}`);
+        }
+        const pageObj = await resVagas.json();
+        const vagasTudo = pageObj.content || pageObj || [];
+        const relacionadas = vagasTudo.filter(v => {
+          if (!v.ativo || !v.areas) return false;
+          return v.areas.some(a => areasInteresse.some(ai => ai.id === a.id));
+        });
+        renderizarVagasRelacionadas(relacionadas);
+      } catch (err) {
+        console.error('Erro ao carregar vagas relacionadas:', err);
+        vagasRelacionadasContainer.innerHTML = '<p>Não foi possível carregar vagas.</p>';
+      }
+    }
+
+
+    function renderizarVagasRelacionadas(vagas) {
+      if (!vagas.length) {
+        vagasRelacionadasContainer.innerHTML = '<p>Não há vagas em aberto nas suas áreas de interesse.</p>';
+        return;
+      }
+      const html = `
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th><th>Título</th><th>Empresa</th><th>Modalidade</th><th>Data</th><th>Ações</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${vagas.map(v => `
+              <tr>
+                <td>${v.id}</td>
+                <td>${v.titulo}</td>
+                <td>${v.empresa ? v.empresa.nomeFantasia : ''}</td>
+                <td>${v.modalidade}</td>
+                <td>${v.dataPublicacao ? v.dataPublicacao.slice(0,10) : ''}</td>
+                <td>
+                  <button onclick="window.location='vagaestagio.html?id=${v.id}'">Ver Detalhes</button>
+                </td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>`;
+      vagasRelacionadasContainer.innerHTML = html;
+    }
+
+
+    async function carregarVagasInscritas() {
+      try {
+        const resIns = await fetch(API_INSCRICOES);
+        if (!resIns.ok) {
+          const txt = await resIns.text();
+          throw new Error(`Erro ${resIns.status}: ${txt}`);
+        }
+        const pageObj = await resIns.json();
+        const todasIns = pageObj.content || pageObj || [];
+
+
+        const minhasInscricoes = todasIns.filter(i => i.estudante && i.estudante.id == currentUserId);
+        renderizarVagasInscritas(minhasInscricoes);
+      } catch (err) {
+        console.error('Erro ao carregar inscrições:', err);
+        vagasInscritasContainer.innerHTML = '<p>Não foi possível carregar suas inscrições.</p>';
+      }
+    }
+
+
+    function renderizarVagasInscritas(inscricoes) {
+      if (!inscricoes.length) {
+        vagasInscritasContainer.innerHTML = '<p>Você ainda não se inscreveu em nenhuma vaga.</p>';
+        return;
+      }
+      const html = `
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th><th>Vaga</th><th>Empresa</th><th>Status</th><th>Data Inscrição</th><th>Ações</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${inscricoes.map(i => `
+              <tr>
+                <td>${i.id}</td>
+                <td>${i.vaga ? i.vaga.titulo : ''}</td>
+                <td>${i.vaga && i.vaga.empresa ? i.vaga.empresa.nomeFantasia : ''}</td>
+                <td>${i.status}</td>
+                <td>${i.dataInscricao ? i.dataInscricao.slice(0,10) : ''}</td>
+                <td>
+                  <button onclick="window.location='vagaestagio.html?id=${i.vaga.id}'">Ver Vaga</button>
+                </td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>`;
+      vagasInscritasContainer.innerHTML = html;
+    }
+
+
+    btnPesquisarPorArea.addEventListener('click', async () => {
+      const areaId = selectPesquisarArea.value;
+      if (!areaId) {
+        alert('Selecione uma área para pesquisar.');
+        return;
+      }
+      try {
+        const resVagas = await fetch(API_VAGAS);
+        if (!resVagas.ok) {
+          const txt = await resVagas.text();
+          throw new Error(`Erro ${resVagas.status}: ${txt}`);
+        }
+        const pageObj = await resVagas.json();
+        const vagasTudo = pageObj.content || pageObj || [];
+        const filtradas = vagasTudo.filter(v => {
+          if (!v.ativo || !v.areas) return false;
+          return v.areas.some(a => a.id == areaId);
+        });
+        renderizarResultadoPesquisa(filtradas);
+      } catch (err) {
+        console.error('Erro na pesquisa de vagas:', err);
+        resultadoPesquisaVagas.innerHTML = '<p>Erro ao buscar vagas.</p>';
+      }
+    });
+
+
+    function renderizarResultadoPesquisa(vagas) {
+      if (!vagas.length) {
+        resultadoPesquisaVagas.innerHTML = '<p>Nenhuma vaga encontrada para essa área.</p>';
+        return;
+      }
+      const html = `
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th><th>Título</th><th>Empresa</th><th>Modalidade</th><th>Data</th><th>Ações</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${vagas.map(v => `
+              <tr>
+                <td>${v.id}</td>
+                <td>${v.titulo}</td>
+                <td>${v.empresa ? v.empresa.nomeFantasia : ''}</td>
+                <td>${v.modalidade}</td>
+                <td>${v.dataPublicacao ? v.dataPublicacao.slice(0,10) : ''}</td>
+                <td>
+                  <button onclick="window.location='vagaestagio.html?id=${v.id}'">Ver Detalhes</button>
+                </td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>`;
+      resultadoPesquisaVagas.innerHTML = html;
+    }
+
+ 
+    async function carregarInscritosPorVaga(empresaId) {
+      try {
+        const resVagas = await fetch(API_VAGAS);
+        if (!resVagas.ok) {
+          const txt = await resVagas.text();
+          throw new Error(`Erro ${resVagas.status}: ${txt}`);
+        }
+        const pageObjV = await resVagas.json();
+        const todasVagas = pageObjV.content || pageObjV || [];
+        const vagasDaEmpresa = todasVagas.filter(v => v.empresa && v.empresa.id == empresaId);
+
+
+        const resIns = await fetch(API_INSCRICOES);
+        if (!resIns.ok) {
+          const txt = await resIns.text();
+          throw new Error(`Erro ${resIns.status}: ${txt}`);
+        }
+        const pageObjI = await resIns.json();
+        const todasInscricoes = pageObjI.content || pageObjI || [];
+
+        // Mapeia inscrições por vaga
+        const mapa = {};
+        vagasDaEmpresa.forEach(v => mapa[v.id] = []);
+        todasInscricoes.forEach(i => {
+          if (i.vaga && mapa[i.vaga.id] !== undefined) {
+            mapa[i.vaga.id].push(i);
+          }
+        });
+
+        renderizarInscritosPorVaga(vagasDaEmpresa, mapa);
+      } catch (err) {
+        console.error('Erro ao carregar inscritos:', err);
+        inscritosPorVagaContainer.innerHTML = '<p>Não foi possível carregar inscritos.</p>';
+      }
+    }
+
+
+    function renderizarInscritosPorVaga(vagas, mapaInscritos) {
+      if (!vagas.length) {
+        inscritosPorVagaContainer.innerHTML = '<p>Você ainda não cadastrou nenhuma vaga.</p>';
+        return;
+      }
+      let html = '';
+      vagas.forEach(v => {
+        html += `<div class="section"><h4>Vaga: ${v.titulo} (ID ${v.id})</h4>`;
+        const inscritos = mapaInscritos[v.id] || [];
+        if (!inscritos.length) {
+          html += `<p>Nenhum estudante inscrito nesta vaga.</p>`;
+        } else {
+          html += `
+            <table>
+              <thead>
+                <tr>
+                  <th>ID Inscrição</th><th>Estudante</th><th>E-mail</th><th>Data</th><th>Status</th><th>Ações</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${inscritos.map(i => `
+                  <tr>
+                    <td>${i.id}</td>
+                    <td>${i.estudante ? i.estudante.nome : ''}</td>
+                    <td>${i.estudante ? i.estudante.email : ''}</td>
+                    <td>${i.dataInscricao ? i.dataInscricao.slice(0,10) : ''}</td>
+                    <td>${i.status}</td>
+                    <td>
+                      <button onclick="window.location='estudante.html?id=${i.estudante.id}'">Ver Perfil</button>
+                    </td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>`;
+        }
+        html += `</div>`;
+      });
+      inscritosPorVagaContainer.innerHTML = html;
+    }
+
+    btnMinhasVagas.addEventListener('click', () => {
+      window.location = `vagaestagio.html?empresaId=${currentUserId}`;
+    });
+
+ 
+    window.iniciarComoEstudante = iniciarComoEstudante;
+    window.iniciarComoEmpresa  = iniciarComoEmpresa;
+  })();
+  </script>
+</body>
+</html>

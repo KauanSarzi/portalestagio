@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Gerenciamento de Áreas</title>
+  <link rel="stylesheet" href="https://unpkg.com/sakura.css/css/sakura.css">
+</head>
+<body>
+  <h1>Áreas de Interesse</h1>
+
+  <table>
+    <tr>
+      <td>ID:</td>
+      <td><input id="txtId" disabled></td>
+    </tr>
+    <tr>
+      <td>Nome:</td>
+      <td><input id="txtNome" placeholder="Digite o nome da área"></td>
+    </tr>
+    <tr>
+      <td></td>
+      <td>
+        <button id="btnNovo">Novo</button>
+        <button id="btnSalvar" disabled>Salvar</button>
+        <button id="btnApagar" disabled>Apagar</button>
+        <button id="btnCancelar" disabled>Cancelar</button>
+      </td>
+    </tr>
+  </table>
+
+  <p id="msg" style="color:red; font-weight:bold"></p>
+
+  <table>
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Nome</th>
+      </tr>
+    </thead>
+    <tbody id="corpoTabela"></tbody>
+  </table>
+
+  <script>
+  (function(){
+    const urlArea = '/api/areas';
+    let areas = [];
+
+    async function listar() {
+      try {
+        const res = await fetch(urlArea);
+        const pageObj = await res.json();
+        areas = pageObj.content || pageObj || [];
+        document.getElementById('corpoTabela').innerHTML = areas.map(a =>
+          `<tr>
+            <td><a href="#" onclick="selecionar(${a.id})">${a.id}</a></td>
+            <td>${a.nome}</td>
+          </tr>`
+        ).join('');
+      } catch (erro) {
+        console.error('Erro ao listar áreas:', erro);
+        document.getElementById('msg').textContent = 'Erro ao carregar lista de áreas.';
+      }
+    }
+
+    window.selecionar = id => {
+      const a = areas.find(x => x.id === id);
+      if (!a) return;
+      document.getElementById('txtId').value   = a.id;
+      document.getElementById('txtNome').value = a.nome;
+      toggle(true);
+    };
+
+    async function salvar() {
+      const id = document.getElementById('txtId').value;
+      const payload = { nome: document.getElementById('txtNome').value };
+      try {
+        await fetch(id ? `${urlArea}/${id}` : urlArea, {
+          method: id ? 'PUT' : 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        reiniciar();
+      } catch (erro) {
+        console.error('Erro ao salvar área:', erro);
+        document.getElementById('msg').textContent = 'Erro ao salvar área.';
+      }
+    }
+
+    async function apagar() {
+      const id = document.getElementById('txtId').value;
+      if (!id) return;
+      try {
+        await fetch(`${urlArea}/${id}`, { method: 'DELETE' });
+        reiniciar();
+      } catch (erro) {
+        console.error('Erro ao apagar área:', erro);
+        document.getElementById('msg').textContent = 'Erro ao apagar área.';
+      }
+    }
+
+    function reiniciar() {
+      document.getElementById('txtId').value = '';
+      document.getElementById('txtNome').value = '';
+      toggle(true);
+      listar();
+    }
+
+    function toggle(edit) {
+      document.getElementById('btnSalvar').disabled   = !edit && !document.getElementById('txtNome').value;
+      document.getElementById('btnApagar').disabled   = !edit;
+      document.getElementById('btnCancelar').disabled = !edit;
+    }
+
+    document.getElementById('btnNovo').onclick     = reiniciar;
+    document.getElementById('btnSalvar').onclick   = salvar;
+    document.getElementById('btnApagar').onclick   = apagar;
+    document.getElementById('btnCancelar').onclick = reiniciar;
+
+    listar();
+  })();
+  </script>
+</body>
+</html>
