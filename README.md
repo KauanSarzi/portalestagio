@@ -266,8 +266,8 @@ O sistema cria automaticamente ao iniciar:
 ## 👥 Autor
 
 **Seu Nome**
-- GitHub: [@seu-usuario](https://github.com/KauanSarzi)
-- LinkedIn: [Seu Nome](https://linkedin.com/in/kauan-sarzi )
+- GitHub: [KauanSarzi](https://github.com/KauanSarzi)
+- LinkedIn: [Kauan Sarzi](https://linkedin.com/in/kauan-sarzi )
 - Email: kauansarzi24@gmail.com
 
 ---
