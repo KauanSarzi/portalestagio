@@ -131,8 +131,8 @@ O projeto segue uma arquitetura em camadas (Layered Architecture) bem definida:
 
 1. **Clone o repositório**
 ```bash
-git clone https://github.com/seu-usuario/portal-estagios.git
-cd portal-estagios/webservicerest
+git clone https://github.com/seu-usuario/portalestagio.git
+cd portalestagio/webservicerest
 ```
 
 2. **Compile o projeto**
