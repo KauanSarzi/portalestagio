@@ -2,64 +2,28 @@
 
 ![Java](https://img.shields.io/badge/Java-21-red?style=flat&logo=openjdk)
 ![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.4.5-brightgreen?style=flat&logo=springboot)
-![SQL](https://img.shields.io/badge/SQL-Database-blue?style=flat)
 ![Maven](https://img.shields.io/badge/Maven-Build-orange?style=flat)
 
-A full-stack web application that connects students and companies through internship opportunities.  
-Built using Spring Boot, REST APIs, and relational database modeling.
-
----
+## Description
+A full-stack web application that connects students and companies through internship opportunities. 
+The system allows companies to post jobs and students to apply, using a REST API and relational database architecture.
 
 ## Features
-
 - Student registration and management
-- Company registration and job posting
-- Internship application tracking
+- Company job posting and tracking
+- Internship application workflow
 - RESTful backend architecture
-- Relational data persistence using JPA
-
----
 
 ## Tech Stack
-
-- Java 21
-- Spring Boot
-- Spring Data JPA (Hibernate)
-- SQL Database (H2 or compatible)
-- Maven
-- Git & GitHub
-
----
-
-## Architecture
-
-Layered architecture:
-
-Controller → Service → Repository → Database
-
-
-Project structure:
-
-src/
-├── controller/
-├── service/
-├── repository/
-├── model/
-└── resources/
-
-
----
+Java, Spring Boot, Spring Data JPA, H2 Database, Maven, Git
 
 ## How to Run
+- git clone https://github.com/KauanSarzi/portalestagio.git
+- cd portalestagio/webservicerest
+- ./mvnw spring-boot:run
 
-Clone the repository:
-
-```bash
-git clone https://github.com/KauanSarzi/portalestagio.git
-cd portalestagio/webservicerest
-
-Run the application:
-./mvnw spring-boot:run
-
-Access:
-http://localhost:8080
+## Author
+Kauan Sarzi
+- GitHub: [KauanSarzi](https://github.com/KauanSarzi)
+- LinkedIn: [Kauan Sarzi](https://linkedin.com/in/kauan-sarzi )
+- Email: kauansarzi24@gmail.com
