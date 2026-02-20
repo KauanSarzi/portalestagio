@@ -1,84 +1,142 @@
-# 🎓 Internship Portal — Full-Stack Job Management System
-
+# Internship Portal — Full-Stack Internship Management System
 ![Java](https://img.shields.io/badge/Java-21-red?style=flat&logo=openjdk)
 ![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.4.5-brightgreen?style=flat&logo=springboot)
 ![Maven](https://img.shields.io/badge/Maven-Build-orange?style=flat&logo=apachemaven)
 ![Status](https://img.shields.io/badge/Status-Completed-brightgreen?style=flat)
 
-> Full-stack web application that connects students and companies through internship opportunities, built with a RESTful API and relational database architecture.
+## 📌 Overview
+
+Internship Portal is a full-stack web application built with Spring Boot that connects university students and companies offering internship opportunities.
+
+The system implements complete CRUD operations and a RESTful API to manage companies, students, internship positions, areas of interest, and applications.
+
+This project demonstrates backend architecture design, relational modeling, and REST API development using modern Java and Spring Boot.
 
 ---
 
-## 📋 Table of Contents
+## 🧠 Problem Context
 
-- [Description](#-description)
-- [Features](#-features)
-- [Tech Stack](#-tech-stack)
-- [How to Run](#-how-to-run)
-- [What I Learned](#-what-i-learned)
-- [Author](#-author)
+Companies need an organized system to publish internship opportunities and manage applications. At the same time, students need a structured platform to explore openings aligned with their interests and academic background.
 
----
+This project simulates a real-world internship marketplace, focusing on:
 
-## 📖 Description
-
-Internship Portal is a backend-focused platform that streamlines the internship application process. Companies can register and post open positions, while students can browse opportunities and submit applications — all through a clean REST API with persistent relational data storage.
+- Entity relationship modeling
+- REST API design
+- Backend validation and data integrity
+- Full-stack integration
 
 ---
 
-## ✨ Features
+## 🏗️ System Architecture
 
-- 🧑‍🎓 Student registration and profile management
-- 🏢 Company job posting and opportunity tracking
-- 📨 Internship application workflow
-- 🔗 RESTful API endpoints for all operations
-- 🗄️ Relational database persistence with JPA
+The application follows a well-defined layered architecture:
 
----
+- **Controller Layer** → REST endpoints and request handling  
+- **Model Layer** → JPA entities and relational mapping  
+- **Repository Layer** → Data access using Spring Data JPA  
+- **Database Layer** → H2 in-memory database for development  
+- **Frontend Layer** → HTML, CSS, and Vanilla JavaScript consuming the REST API  
 
-## 🛠️ Tech Stack
-
-| Technology | Purpose |
-|---|---|
-| Java 21 | Core language |
-| Spring Boot 3.4.5 | Application framework |
-| Spring Data JPA | ORM and database layer |
-| H2 Database | In-memory relational database |
-| Maven | Build and dependency management |
+This separation of concerns improves maintainability, scalability, and clarity of responsibilities.
 
 ---
 
-## ▶️ How to Run
+## 🗄️ Data Model
+
+Main entities:
+
+- Company
+- Student
+- InternshipPosition
+- Area
+- Application
+
+### Core Relationships
+
+- One Company → Many Internship Positions (1:N)
+- Internship Position ↔ Area (N:M)
+- Student ↔ Area (N:M)
+- One Student → Many Applications (1:N)
+- One Internship Position → Many Applications (1:N)
+
+The model ensures referential integrity and consistent data relationships.
+
+---
+
+## 🛠️ Technologies Used
+
+### Backend
+- Java 21
+- Spring Boot 3.4.5
+- Spring Data JPA
+- Hibernate (ORM)
+- H2 Database (in-memory)
+- Maven
+
+### Frontend
+- HTML5
+- CSS3
+- Vanilla JavaScript (REST API consumption)
+
+---
+
+## ⚙️ Features
+
+✔ Full CRUD for Companies, Students, Areas, Internship Positions, and Applications  
+✔ RESTful API design  
+✔ Filtering internship positions by company and area  
+✔ Pagination support  
+✔ Business rule validations (unique email, unique enrollment, required fields)  
+✔ Referential integrity protection  
+✔ Layered architecture implementation  
+
+---
+
+## 📡 REST API Endpoints
+
+### Companies
+- GET /api/empresas
+- GET /api/empresas/{id}
+- POST /api/empresas
+- PUT /api/empresas/{id}
+- DELETE /api/empresas/{id}
+
+### Students
+- GET /api/estudantes
+- GET /api/estudantes/{id}
+- POST /api/estudantes
+- PUT /api/estudantes/{id}
+- DELETE /api/estudantes/{id}
+
+### Internship Positions
+- GET /api/vagas
+- GET /api/vagas/{id}
+- POST /api/vagas
+- PUT /api/vagas/{id}
+- PATCH /api/vagas/{id}/encerrar
+- DELETE /api/vagas/{id}
+
+Supports filtering and pagination.
+
+### Applications
+- GET /api/inscricoes
+- POST /api/inscricoes
+- PATCH /api/inscricoes/{id}
+- DELETE /api/inscricoes/{id}
+
+---
+
+## 🚀 How to Run
+
+### Requirements
+
+- Java 21+
+- Maven 3.9+
+
+### Steps
+
+Clone the repository:
 
 ```bash
-# Clone the repository
-git clone https://github.com/KauanSarzi/portalestagio.git
-
-# Navigate to the project folder
-cd portalestagio/webservicerest
-
-# Run the application
-./mvnw spring-boot:run
-```
-
-The API will be available at `http://localhost:8080`.
-
----
-
-## 📚 What I Learned
-
-- Backend development using Spring Boot and its ecosystem
-- REST API design principles and implementation
-- Relational database modeling with JPA and entity relationships
-- Layered software architecture (Controller → Service → Repository)
-- Real-world backend system development from scratch
-
----
-
-## 👤 Author
-
-**Kauan Sarzi**
-
-[![GitHub](https://img.shields.io/badge/GitHub-KauanSarzi-181717?style=flat&logo=github)](https://github.com/KauanSarzi)
-[![LinkedIn](https://img.shields.io/badge/LinkedIn-Kauan%20Sarzi-0077B5?style=flat&logo=linkedin)](https://linkedin.com/in/kauan-sarzi)
-[![Email](https://img.shields.io/badge/Email-kauansarzi24@gmail.com-D14836?style=flat&logo=gmail)](mailto:kauansarzi24@gmail.com)
+git clone https://github.com/KauanSarzi/portalestagio
+cd portalestagio
