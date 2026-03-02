@@ -1,87 +1,103 @@
 # Internship Portal — Full-Stack Internship Management System
+
 ![Java](https://img.shields.io/badge/Java-21-red?style=flat&logo=openjdk)
 ![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.4.5-brightgreen?style=flat&logo=springboot)
 ![Maven](https://img.shields.io/badge/Maven-Build-orange?style=flat&logo=apachemaven)
 ![Status](https://img.shields.io/badge/Status-Completed-brightgreen?style=flat)
 
-## 📌 Overview
+A full-stack web application built with **Spring Boot** that connects **university students** and **companies** offering internship opportunities.  
+Provides a complete **REST API** with CRUD operations, **relational modeling**, and a simple **frontend** consuming the backend.
 
-Internship Portal is a full-stack web application built with Spring Boot that connects university students and companies offering internship opportunities.
+---
 
-The system provides complete CRUD operations through a RESTful API to manage companies, students, internship positions, areas of interest, and applications.
+## ✨ Highlights
 
-This project demonstrates backend architecture design, relational data modeling, REST API development, and full-stack integration using modern Java and Spring Boot.
+- ✅ Layered architecture (**Controller / Service / Repository / Model**)
+- ✅ Relational modeling with **1:N** and **N:M** relationships
+- ✅ Business validations (unique email/enrollment, required fields)
+- ✅ Referential integrity protection (prevents inconsistent deletions)
+- ✅ Filtering + pagination for internship positions
+- ✅ Swagger documentation + Postman-friendly responses
 
-## 🧠 Problem Context
+---
 
-Companies require a structured system to publish internship opportunities and manage candidate applications efficiently. At the same time, students need a centralized platform to explore opportunities aligned with their academic background and professional interests.
+## 🧩 Problem Context
 
-This project simulates a real-world internship marketplace, focusing on:
+Companies need a structured way to publish internship opportunities and manage applications.  
+Students need a centralized platform to explore positions aligned with their interests and background.
 
-* Clear entity relationship modeling
-* Structured REST API design
-* Backend validation and business rule enforcement
-* Data integrity and referential consistency
-* Frontend integration consuming backend services
+This project simulates a real internship marketplace focusing on:
 
-## 🏗️ System Architecture
+- Entity relationship design
+- REST API structure and good practices
+- Business rules & validation
+- Data integrity and consistency
+- Full-stack integration (frontend consuming API)
 
-The application follows a layered architecture with clear separation of responsibilities:
+---
 
-* **Controller Layer** → Handles HTTP requests and exposes REST endpoints
-* **Model Layer** → JPA entities and relational mapping
-* **Repository Layer** → Data access abstraction using Spring Data JPA
-* **Database Layer** → H2 in-memory database for development
-* **Frontend Layer** → HTML, CSS, and Vanilla JavaScript consuming the REST API
+## 🏗️ Architecture
 
-This separation of concerns improves maintainability, testability, and scalability while keeping business logic isolated from persistence and presentation layers.
+The application follows a **layered architecture** with separation of concerns:
+
+- **Controller Layer** → HTTP requests and REST endpoints  
+- **Service Layer** → business rules and validations  
+- **Repository Layer** → data access (Spring Data JPA)  
+- **Model Layer** → JPA entities and mappings  
+- **Database Layer** → H2 (in-memory) for development  
+- **Frontend Layer** → HTML/CSS + Vanilla JS consuming the API  
+
+---
 
 ## 🗄️ Data Model
 
-### Main Entities
+### Entities
+- Company
+- Student
+- InternshipPosition
+- Area
+- Application
 
-* Company
-* Student
-* InternshipPosition
-* Area
-* Application
+### Relationships
+- Company → InternshipPosition (**1:N**)  
+- InternshipPosition ↔ Area (**N:M**)  
+- Student ↔ Area (**N:M**)  
+- Student → Application (**1:N**)  
+- InternshipPosition → Application (**1:N**)  
 
-### Core Relationships
+Designed to ensure **referential integrity**, prevent invalid deletions, and represent marketplace interactions.
 
-* One Company → Many Internship Positions (1:N)
-* Internship Position ↔ Area (N:M)
-* Student ↔ Area (N:M)
-* One Student → Many Applications (1:N)
-* One Internship Position → Many Applications (1:N)
+---
 
-The relational model was designed to ensure referential integrity, prevent inconsistent deletions, and accurately represent real marketplace interactions.
-
-## 🛠️ Technologies Used
+## 🛠️ Tech Stack
 
 ### Backend
-
-* Java 21
-* Spring Boot 3.4.5
-* Spring Data JPA
-* Hibernate (ORM)
-* H2 Database (in-memory)
-* Maven
+- Java 21
+- Spring Boot 3.4.5
+- Spring Data JPA + Hibernate
+- H2 Database
+- Maven
 
 ### Frontend
+- HTML5
+- CSS3
+- Vanilla JavaScript (REST API consumption)
 
-* HTML5
-* CSS3
-* Vanilla JavaScript (REST API consumption)
+---
 
 ## ⚙️ Features
 
-✔ Full CRUD operations for Companies, Students, Areas, Internship Positions, and Applications  
-✔ RESTful API with structured endpoint design  
-✔ Filtering internship positions by company and area  
-✔ Pagination support for scalable data retrieval  
-✔ Business rule validations (unique email, unique enrollment, required fields)  
-✔ Referential integrity protection to prevent inconsistent deletions  
-✔ Layered architecture implementation with clear responsibility boundaries  
+- CRUD for **Companies, Students, Areas, Internship Positions, Applications**
+- Structured REST endpoints
+- Internship positions filtering by **company** and **area**
+- Pagination for scalable retrieval
+- Business validations:
+  - unique email
+  - unique enrollment
+  - required fields
+- Endpoint documentation (Swagger)
+
+---
 
 ## 📡 REST API Endpoints
 
