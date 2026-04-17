@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Gerenciamento de Empresas</title>
+  <link rel="stylesheet" href="https://unpkg.com/sakura.css/css/sakura.css">
+</head>
+<body>
+  <h1>Empresas</h1>
+
+  <table>
+    <tr>
+      <td>ID:</td>
+      <td><input id="txtId" disabled></td>
+    </tr>
+    <tr>
+      <td>CNPJ:</td>
+      <td><input id="txtCnpj" placeholder="XX.XXX.XXX/0001-YY"></td>
+    </tr>
+    <tr>
+      <td>Nome Fantasia:</td>
+      <td><input id="txtNomeFantasia" placeholder="Nome Fantasia"></td>
+    </tr>
+    <tr>
+      <td>E-mail Contato:</td>
+      <td><input id="txtEmailContato" type="email" placeholder="contato@empresa.com"></td>
+    </tr>
+    <tr>
+      <td>Endereço:</td>
+      <td><input id="txtEndereco" placeholder="Rua X, 123"></td>
+    </tr>
+    <tr>
+      <td>Descrição:</td>
+      <td><input id="txtDescricao" placeholder="Descrição da empresa"></td>
+    </tr>
+    <tr>
+      <td>Telefone:</td>
+      <td><input id="txtTelefoneContato" placeholder="(XX) XXXXX-XXXX"></td>
+    </tr>
+    <tr>
+      <td>Ramo Atuação:</td>
+      <td><input id="txtRamoAtuacao" placeholder="Ex.: Tecnologia"></td>
+    </tr>
+    <tr>
+      <td></td>
+      <td>
+        <button id="btnNovo">Novo</button>
+        <button id="btnSalvar" disabled>Salvar</button>
+        <button id="btnApagar" disabled>Apagar</button>
+        <button id="btnCancelar" disabled>Cancelar</button>
+      </td>
+    </tr>
+  </table>
+
+  <p id="msg" style="color:red; font-weight:bold"></p>
+
+  <table>
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>CNPJ</th>
+        <th>Nome Fantasia</th>
+        <th>E-mail</th>
+        <th>Endereço</th>
+        <th>Ramo</th>
+      </tr>
+    </thead>
+    <tbody id="corpoTabela"></tbody>
+  </table>
+
+  <script>
+  (function(){
+    const urlEmp = '/api/empresas';
+    let empresas = [];
+
+    async function listar() {
+      try {
+        const res = await fetch(urlEmp);
+        const pageObj = await res.json();
+        empresas = pageObj.content || pageObj || [];
+        document.getElementById('corpoTabela').innerHTML = empresas.map(e =>
+          `<tr>
+            <td><a href="#" onclick="selecionar(${e.id})">${e.id}</a></td>
+            <td>${e.cnpj}</td>
+            <td>${e.nomeFantasia}</td>
+            <td>${e.emailContato}</td>
+            <td>${e.endereco || ''}</td>
+            <td>${e.ramoAtuacao || ''}</td>
+          </tr>`
+        ).join('');
+      } catch (erro) {
+        console.error('Erro ao listar empresas:', erro);
+        document.getElementById('msg').textContent = 'Erro ao carregar lista de empresas.';
+      }
+    }
+
+    window.selecionar = id => {
+      const e = empresas.find(x => x.id === id);
+      if (!e) return;
+      document.getElementById('txtId').value           = e.id;
+      document.getElementById('txtCnpj').value         = e.cnpj;
+      document.getElementById('txtNomeFantasia').value = e.nomeFantasia;
+      document.getElementById('txtEmailContato').value = e.emailContato;
+      document.getElementById('txtEndereco').value     = e.endereco || '';
+      document.getElementById('txtDescricao').value    = e.descricao || '';
+      document.getElementById('txtTelefoneContato').value = e.telefoneContato || '';
+      document.getElementById('txtRamoAtuacao').value  = e.ramoAtuacao || '';
+      toggle(true);
+    };
+
+    async function salvar() {
+      const id = document.getElementById('txtId').value;
+      const payload = {
+        cnpj: document.getElementById('txtCnpj').value,
+        nomeFantasia: document.getElementById('txtNomeFantasia').value,
+        emailContato: document.getElementById('txtEmailContato').value,
+        endereco: document.getElementById('txtEndereco').value,
+        descricao: document.getElementById('txtDescricao').value,
+        telefoneContato: document.getElementById('txtTelefoneContato').value,
+        ramoAtuacao: document.getElementById('txtRamoAtuacao').value
+      };
+      try {
+        await fetch(id ? `${urlEmp}/${id}` : urlEmp, {
+          method: id ? 'PUT' : 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        reiniciar();
+      } catch (erro) {
+        console.error('Erro ao salvar empresa:', erro);
+        document.getElementById('msg').textContent = 'Erro ao salvar.';
+      }
+    }
+
+    async function apagar() {
+      const id = document.getElementById('txtId').value;
+      if (!id) return;
+      try {
+        await fetch(`${urlEmp}/${id}`, { method: 'DELETE' });
+        reiniciar();
+      } catch (erro) {
+        console.error('Erro ao apagar empresa:', erro);
+        document.getElementById('msg').textContent = 'Erro ao apagar.';
+      }
+    }
+
+    function reiniciar() {
+      [
+        'txtId',
+        'txtCnpj',
+        'txtNomeFantasia',
+        'txtEmailContato',
+        'txtEndereco',
+        'txtDescricao',
+        'txtTelefoneContato',
+        'txtRamoAtuacao'
+      ].forEach(id => document.getElementById(id).value = '');
+      toggle(true);
+      listar();
+    }
+
+    function toggle(edit) {
+      document.getElementById('btnSalvar').disabled   = !edit && !document.getElementById('txtCnpj').value;
+      document.getElementById('btnApagar').disabled   = !edit;
+      document.getElementById('btnCancelar').disabled = !edit;
+    }
+
+    document.getElementById('btnNovo').onclick     = reiniciar;
+    document.getElementById('btnSalvar').onclick   = salvar;
+    document.getElementById('btnApagar').onclick   = apagar;
+    document.getElementById('btnCancelar').onclick = reiniciar;
+
+    listar();
+  })();
+  </script>
+</body>
+</html>

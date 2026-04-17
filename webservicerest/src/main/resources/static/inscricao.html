@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Gerenciamento de Inscrições</title>
+  <link rel="stylesheet" href="https://unpkg.com/sakura.css/css/sakura.css">
+</head>
+<body>
+  <h1>Inscrições</h1>
+
+  <!-- FORMULÁRIO DE CRIAÇÃO / EDIÇÃO -->
+  <table>
+    <tr>
+      <td>ID:</td>
+      <td><input id="txtId" disabled></td>
+    </tr>
+    <tr>
+      <td>Data Inscrição:</td>
+      <td><input id="txtDataInscricao" type="date"></td>
+    </tr>
+    <tr>
+      <td>Status:</td>
+      <td>
+        <select id="txtStatus">
+          <option value="">––</option>
+          <option value="PENDENTE">PENDENTE</option>
+          <option value="SELECIONADO">SELECIONADO</option>
+          <option value="REPROVADO">REPROVADO</option>
+        </select>
+      </td>
+    </tr>
+    <tr>
+      <td>Mensagem Apresentação:</td>
+      <td><input id="txtMensagemApresentacao" placeholder="Mensagem de apresentação"></td>
+    </tr>
+    <tr>
+      <td>Estudante:</td>
+      <td>
+        <select id="selectEstudante">
+          <!-- Preenchido por carregarEstudantes() -->
+        </select>
+      </td>
+    </tr>
+    <tr>
+      <td>Vaga:</td>
+      <td>
+        <select id="selectVaga">
+          <!-- Preenchido por carregarVagas() -->
+        </select>
+      </td>
+    </tr>
+    <tr>
+      <td></td>
+      <td>
+        <button id="btnNovo">Novo</button>
+        <button id="btnSalvar" disabled>Salvar</button>
+        <button id="btnApagar" disabled>Apagar</button>
+        <button id="btnCancelar" disabled>Cancelar</button>
+      </td>
+    </tr>
+  </table>
+
+  <p id="msg" style="color:red; font-weight:bold"></p>
+
+  <!-- TABELA DE LISTAGEM -->
+  <table>
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Data</th>
+        <th>Status</th>
+        <th>Estudante</th>
+        <th>Vaga</th>
+      </tr>
+    </thead>
+    <tbody id="corpoTabela"></tbody>
+  </table>
+
+  <script>
+  (function(){
+    const urlIns = '/api/inscricoes';
+    const urlEst = '/api/estudantes';
+    const urlVag = '/api/vagas';
+    let inscricoes = [], estudantes = [], vagas = [];
+
+    /** 1) Carrega lista de estudantes (GET /api/estudantes) */
+    async function carregarEstudantes() {
+      try {
+        const res = await fetch(urlEst);
+        if (!res.ok) {
+          const txt = await res.text();
+          throw new Error(`Erro ${res.status}: ${txt}`);
+        }
+        const pageObj = await res.json();
+        estudantes = pageObj.content || pageObj || [];
+        document.getElementById('selectEstudante').innerHTML =
+          '<option value="">––</option>' +
+          estudantes.map(e =>
+            `<option value="${e.id}">${e.nome}</option>`
+          ).join('');
+      } catch (erro) {
+        console.error('Erro ao carregar estudantes:', erro);
+        document.getElementById('msg').textContent = 'Erro ao carregar estudantes.';
+      }
+    }
+
+    /** 2) Carrega lista de vagas (GET /api/vagas) */
+    async function carregarVagas() {
+      try {
+        const res = await fetch(urlVag);
+        if (!res.ok) {
+          const txt = await res.text();
+          throw new Error(`Erro ${res.status}: ${txt}`);
+        }
+        const pageObj = await res.json();
+        vagas = pageObj.content || pageObj || [];
+        document.getElementById('selectVaga').innerHTML =
+          '<option value="">––</option>' +
+          vagas.map(v =>
+            `<option value="${v.id}">${v.titulo} [${v.empresa ? v.empresa.nomeFantasia : ''}]</option>`
+          ).join('');
+      } catch (erro) {
+        console.error('Erro ao carregar vagas:', erro);
+        document.getElementById('msg').textContent = 'Erro ao carregar vagas.';
+      }
+    }
+
+    /** 3) Lista inscrições (GET /api/inscricoes) */
+    async function listar() {
+      try {
+        const res = await fetch(urlIns);
+        if (!res.ok) {
+          const txt = await res.text();
+          throw new Error(`Erro ${res.status}: ${txt}`);
+        }
+        const pageObj = await res.json();
+        inscricoes = pageObj.content || pageObj || [];
+        document.getElementById('corpoTabela').innerHTML = inscricoes.map(i => {
+          const nomeEst = i.estudante ? i.estudante.nome : '';
+          const tituloVaga = i.vaga ? i.vaga.titulo : '';
+          return `<tr>
+            <td><a href="#" onclick="selecionar(${i.id})">${i.id}</a></td>
+            <td>${i.dataInscricao ? i.dataInscricao.slice(0,10) : ''}</td>
+            <td>${i.status}</td>
+            <td>${nomeEst}</td>
+            <td>${tituloVaga}</td>
+          </tr>`;
+        }).join('');
+      } catch (erro) {
+        console.error('Erro ao listar inscrições:', erro);
+        document.getElementById('msg').textContent = 'Erro ao carregar inscrições.';
+      }
+    }
+
+    /** 4) Preenche formulário ao clicar num ID */
+    window.selecionar = id => {
+      const i = inscricoes.find(x => x.id === id);
+      if (!i) return;
+      document.getElementById('txtId').value                = i.id;
+      document.getElementById('txtDataInscricao').value     = i.dataInscricao ? i.dataInscricao.slice(0,10) : '';
+      document.getElementById('txtStatus').value            = i.status;
+      document.getElementById('txtMensagemApresentacao').value = i.mensagemApresentacao || '';
+      document.getElementById('selectEstudante').value      = i.estudante ? i.estudante.id : '';
+      document.getElementById('selectVaga').value           = i.vaga ? i.vaga.id : '';
+      toggle(true);
+    };
+
+    /** 5) Cria ou atualiza inscrição (POST ou PUT) */
+    async function salvar() {
+      const id = document.getElementById('txtId').value;
+      const dataIns = document.getElementById('txtDataInscricao').value;
+      const status = document.getElementById('txtStatus').value;
+      const mensagem = document.getElementById('txtMensagemApresentacao').value.trim();
+      const estId = +document.getElementById('selectEstudante').value;
+      const vagId = +document.getElementById('selectVaga').value;
+
+      if (!dataIns || !status || !estId || !vagId) {
+        document.getElementById('msg').textContent =
+          'Preencha Data, Status, selecione Estudante e Vaga.';
+        return;
+      }
+
+      const payload = {
+        dataInscricao: dataIns,
+        status,
+        mensagemApresentacao: mensagem,
+        estudante: { id: estId },
+        vaga:      { id: vagId }
+      };
+
+      try {
+        const res = await fetch(id ? `${urlIns}/${id}` : urlIns, {
+          method: id ? 'PUT' : 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        if (!res.ok) {
+          const txt = await res.text();
+          throw new Error(`Erro ${res.status}: ${txt}`);
+        }
+
+        reiniciar();
+      } catch (erro) {
+        console.error('Erro ao salvar inscrição:', erro);
+        document.getElementById('msg').textContent = 'Erro ao salvar inscrição.';
+      }
+    }
+
+    /** 6) Exclui inscrição (DELETE) */
+    async function apagar() {
+      const id = document.getElementById('txtId').value;
+      if (!id) return;
+      try {
+        const res = await fetch(`${urlIns}/${id}`, { method: 'DELETE' });
+        if (!res.ok) {
+          const txt = await res.text();
+          throw new Error(`Erro ${res.status}: ${txt}`);
+        }
+        reiniciar();
+      } catch (erro) {
+        console.error('Erro ao apagar inscrição:', erro);
+        document.getElementById('msg').textContent = 'Erro ao apagar inscrição.';
+      }
+    }
+
+    /** 7) Limpa formulário e recarrega listas */
+    function reiniciar() {
+      ['Id','DataInscricao','Status','MensagemApresentacao']
+        .forEach(f => document.getElementById('txt'+f).value = '');
+      document.getElementById('selectEstudante').selectedIndex = 0;
+      document.getElementById('selectVaga').selectedIndex      = 0;
+      toggle(true);
+      carregarEstudantes();
+      carregarVagas();
+      listar();
+    }
+
+    /** 8) Habilita/desabilita botões */
+    function toggle(edit) {
+      const hasStatus = !!document.getElementById('txtStatus').value;
+      document.getElementById('btnSalvar').disabled   = !edit && !hasStatus;
+      document.getElementById('btnApagar').disabled   = !edit;
+      document.getElementById('btnCancelar').disabled = !edit;
+    }
+
+    // 9) Associa botões
+    document.getElementById('btnNovo').onclick     = reiniciar;
+    document.getElementById('btnSalvar').onclick   = salvar;
+    document.getElementById('btnApagar').onclick   = apagar;
+    document.getElementById('btnCancelar').onclick = reiniciar;
+
+    // 10) Carrega listas iniciais ao iniciar
+    carregarEstudantes();
+    carregarVagas();
+    listar();
+  })();
+  </script>
+</body>
+</html>

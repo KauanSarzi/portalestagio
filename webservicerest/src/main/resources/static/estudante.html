@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Gerenciamento de Estudantes</title>
+  <link rel="stylesheet" href="https://unpkg.com/sakura.css/css/sakura.css">
+</head>
+<body>
+  <h1>Estudantes</h1>
+
+  <table>
+    <tr>
+      <td>ID:</td>
+      <td><input id="txtId" disabled></td>
+    </tr>
+    <tr>
+      <td>Nome:</td>
+      <td><input id="txtNome" placeholder="Nome completo"></td>
+    </tr>
+    <tr>
+      <td>E-mail:</td>
+      <td><input id="txtEmail" type="email" placeholder="email@exemplo.com"></td>
+    </tr>
+    <tr>
+      <td>Ano Ingresso:</td>
+      <td><input id="txtAnoIngresso" type="number" placeholder="2023"></td>
+    </tr>
+    <tr>
+      <td>Curso:</td>
+      <td><input id="txtCurso" placeholder="Curso"></td>
+    </tr>
+    <tr>
+      <td>Matrícula:</td>
+      <td><input id="txtMatricula" placeholder="Número de matrícula"></td>
+    </tr>
+    <tr>
+      <td>Período Atual:</td>
+      <td><input id="txtPeriodoAtual" placeholder="Período"></td>
+    </tr>
+    <tr>
+      <td>Áreas de Interesse:</td>
+      <td>
+        <select id="selectAreas" multiple style="height: 100px;">
+        </select>
+      </td>
+    </tr>
+    <tr>
+      <td></td>
+      <td>
+        <button id="btnNovo">Novo</button>
+        <button id="btnSalvar" disabled>Salvar</button>
+        <button id="btnApagar" disabled>Apagar</button>
+        <button id="btnCancelar" disabled>Cancelar</button>
+      </td>
+    </tr>
+  </table>
+
+  <p id="msg" style="color:red; font-weight:bold"></p>
+
+  <table>
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Nome</th>
+        <th>E-mail</th>
+        <th>Ano</th>
+        <th>Curso</th>
+        <th>Matrícula</th>
+        <th>Período</th>
+        <th>Áreas</th>
+      </tr>
+    </thead>
+    <tbody id="corpoTabela"></tbody>
+  </table>
+
+  <script>
+  (function(){
+    const urlEst = '/api/estudantes';
+    const urlArea = '/api/areas';
+    let estudantes = [], areas = [];
+
+    async function carregarAreas() {
+      try {
+        const res = await fetch(urlArea);
+        const pageObj = await res.json();
+        areas = pageObj.content || pageObj || [];
+        document.getElementById('selectAreas').innerHTML =
+          areas.map(a =>
+            `<option value="${a.id}">${a.nome}</option>`
+          ).join('');
+      } catch (erro) {
+        console.error('Erro ao carregar áreas:', erro);
+        document.getElementById('msg').textContent = 'Erro ao carregar áreas.';
+      }
+    }
+
+    async function listar() {
+      try {
+        const res = await fetch(urlEst);
+        const pageObj = await res.json();
+        estudantes = pageObj.content || pageObj || [];
+        document.getElementById('corpoTabela').innerHTML = estudantes.map(e => {
+          const listaAreas = (e.areas || []).map(a => a.nome).join(', ');
+          return `<tr>
+            <td><a href="#" onclick="selecionar(${e.id})">${e.id}</a></td>
+            <td>${e.nome}</td>
+            <td>${e.email}</td>
+            <td>${e.anoIngresso}</td>
+            <td>${e.curso}</td>
+            <td>${e.matricula || ''}</td>
+            <td>${e.periodoAtual || ''}</td>
+            <td>${listaAreas}</td>
+          </tr>`;
+        }).join('');
+      } catch (erro) {
+        console.error('Erro ao listar estudantes:', erro);
+        document.getElementById('msg').textContent = 'Erro ao carregar estudantes.';
+      }
+    }
+
+    window.selecionar = id => {
+      const e = estudantes.find(x => x.id === id);
+      if (!e) return;
+      document.getElementById('txtId').value           = e.id;
+      document.getElementById('txtNome').value         = e.nome;
+      document.getElementById('txtEmail').value        = e.email;
+      document.getElementById('txtAnoIngresso').value  = e.anoIngresso;
+      document.getElementById('txtCurso').value        = e.curso;
+      document.getElementById('txtMatricula').value    = e.matricula || '';
+      document.getElementById('txtPeriodoAtual').value = e.periodoAtual || '';
+      const sel = document.getElementById('selectAreas');
+      Array.from(sel.options).forEach(opt => {
+        opt.selected = ( (e.areas || []).some(a => a.id === +opt.value) );
+      });
+      toggle(true);
+    };
+
+    async function salvar() {
+      const id = document.getElementById('txtId').value;
+      const payload = {
+        nome: document.getElementById('txtNome').value,
+        email: document.getElementById('txtEmail').value,
+        anoIngresso: +document.getElementById('txtAnoIngresso').value,
+        curso: document.getElementById('txtCurso').value,
+        matricula: document.getElementById('txtMatricula').value,
+        periodoAtual: document.getElementById('txtPeriodoAtual').value,
+        areas: Array.from(document.getElementById('selectAreas').selectedOptions)
+                    .map(opt => ({ id: +opt.value }))
+      };
+      try {
+        await fetch( id ? `${urlEst}/${id}` : urlEst, {
+          method: id ? 'PUT' : 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        reiniciar();
+      } catch (erro) {
+        console.error('Erro ao salvar estudante:', erro);
+        document.getElementById('msg').textContent = 'Erro ao salvar estudante.';
+      }
+    }
+
+    async function apagar() {
+      const id = document.getElementById('txtId').value;
+      if (!id) return;
+      try {
+        await fetch(`${urlEst}/${id}`, { method: 'DELETE' });
+        reiniciar();
+      } catch (erro) {
+        console.error('Erro ao apagar estudante:', erro);
+        document.getElementById('msg').textContent = 'Erro ao apagar estudante.';
+      }
+    }
+
+    function reiniciar() {
+      ['Id','Nome','Email','AnoIngresso','Curso','Matricula','PeriodoAtual']
+        .forEach(f => document.getElementById('txt'+f).value = '');
+      Array.from(document.getElementById('selectAreas').options)
+           .forEach(opt => opt.selected = false);
+      toggle(true);
+      carregarAreas();
+      listar();
+    }
+
+    function toggle(edit) {
+      document.getElementById('btnSalvar').disabled   = !edit && !document.getElementById('txtNome').value;
+      document.getElementById('btnApagar').disabled   = !edit;
+      document.getElementById('btnCancelar').disabled = !edit;
+    }
+
+    document.getElementById('btnNovo').onclick     = reiniciar;
+    document.getElementById('btnSalvar').onclick   = salvar;
+    document.getElementById('btnApagar').onclick   = apagar;
+    document.getElementById('btnCancelar').onclick = reiniciar;
+
+    carregarAreas();
+    listar();
+  })();
+  </script>
+</body>
+</html>
