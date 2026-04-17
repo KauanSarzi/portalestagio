@@ -40,8 +40,7 @@ This project simulates a real internship marketplace focusing on:
 
 The application follows a **layered architecture** with separation of concerns:
 
-- **Controller Layer** → HTTP requests and REST endpoints  
-- **Service Layer** → business rules and validations  
+- **Controller Layer** → HTTP requests and REST endpoints    
 - **Repository Layer** → data access (Spring Data JPA)  
 - **Model Layer** → JPA entities and mappings  
 - **Database Layer** → H2 (in-memory) for development  
